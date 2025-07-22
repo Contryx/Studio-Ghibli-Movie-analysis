@@ -1,0 +1,59 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# load data
+file_path = "Studio Ghibli.csv"
+df = pd.read_csv(file_path)
+
+# clean budget and revenue
+df['Budget'] = df['Budget'].replace('[\$,]', '', regex=True).astype(float)
+df['Revenue'] = df['Revenue'].replace('[\$,]', '', regex=True).astype(float)
+
+# drop missing values
+df = df.dropna(subset=['Budget', 'Revenue'])
+
+# sort by revenue
+df = df.sort_values(by='Revenue', ascending=True)
+
+# plot bars
+fig, ax = plt.subplots(figsize=(10, 6.9))
+bar_width = 0.4
+x = range(len(df['Name']))
+
+bars_budget = ax.bar(x, df['Budget'], width=bar_width, label='Budget (millions)', color='#87CEEB', edgecolor='black', align='center')
+bars_revenue = ax.bar([p + bar_width for p in x], df['Revenue'], width=bar_width, label='Revenue (millions)', color='#4682B4', edgecolor='black', align='center')
+
+# x-axis
+df['Short Name'] = df['Name'].str.split('\n').str[0]
+ax.set_xticks([p + bar_width / 3 for p in x])
+ax.set_xticklabels(df['Short Name'], rotation=45, ha='right', fontsize=10)
+
+# y-axis (log scale)
+ax.set_yscale('log')
+ax.set_ylabel('Amount', fontsize=12)
+ax.set_title('Budget vs Revenue of Studio Ghibli Films', fontsize=14, pad=10)
+ax.legend(loc='upper left', bbox_to_anchor=(-0.2, 1))
+
+# custom y-ticks
+ax.set_yticks([1e6, 1e7, 1e8, 1e9])
+ax.set_yticklabels(['1M', '10M', '100M', '1B'], fontsize=10)
+
+# add labels
+def add_labels(bars, data_column):
+    for bar, value in zip(bars, data_column):
+        if value < 1e6:
+            label = f"{round(value/1e6, 1)}"
+        else:
+            label = f"{int(value/1e6)}"
+        x_pos = bar.get_x() + bar.get_width() / 2
+        y_pos = bar.get_height()
+        vertical_offset = y_pos * 0.15
+        ax.text(x_pos, y_pos + vertical_offset, label, ha='center', va='bottom', fontsize=9)
+
+add_labels(bars_budget, df['Budget'])
+add_labels(bars_revenue, df['Revenue'])
+
+# layout
+plt.tight_layout()
+plt.show()
